@@ -39,7 +39,7 @@ export const signup = asyncHandler(async (req, res) => {
     otp: crypto.createHash('sha256').update(otp).digest('hex'),
     otpExpires: Date.now() + 10 * 60 * 1000,
   });
-
+  console.log(`OTP for ${email}: ${otp}`);
   await sendOtpEmail(email, otp);
   message: 'Account created. Check your email for the OTP verification code.'
   res.status(201).json({
