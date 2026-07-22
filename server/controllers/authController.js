@@ -26,26 +26,49 @@ const issueTokens = async (res, user) => {
 /** POST /api/auth/signup */
 export const signup = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-  if (!name || !email || !password) throw new ApiError(400, 'Name, email and password are required');
-  if (!validator.isEmail(email)) throw new ApiError(400, 'Invalid email address');
-  if (password.length < 6) throw new ApiError(400, 'Password must be at least 6 characters');
+
+  if (!name || !email || !password) {
+    throw new ApiError(400, 'Name, email and password are required');
+  }
+
+  if (!validator.isEmail(email)) {
+    throw new ApiError(400, 'Invalid email address');
+  }
+
+  if (password.length < 6) {
+    throw new ApiError(400, 'Password must be at least 6 characters');
+  }
 
   const exists = await User.findOne({ email });
-  if (exists) throw new ApiError(409, 'An account with this email already exists');
+
+  if (exists) {
+    throw new ApiError(409, 'An account with this email already exists');
+  }
 
   const otp = String(crypto.randomInt(100000, 999999));
+
   const user = await User.create({
-    name, email, password,
+    name,
+    email,
+    password,
     otp: crypto.createHash('sha256').update(otp).digest('hex'),
     otpExpires: Date.now() + 10 * 60 * 1000,
   });
-  console.log(`OTP for ${email}: ${otp}`);
+
+  console.log('================================');
+console.log('RESEND OTP');
+console.log('Email:', email);
+console.log('OTP:', otp);
+console.log('================================');
+
   await sendOtpEmail(email, otp);
-  message: 'Account created. Check your email for the OTP verification code.'
-  res.status(201).json({
+
+  return res.status(201).json({
     success: true,
     message: 'Account created. Check your email for the OTP verification code.',
-    data: { email: user.email },
+    data: {
+      email: user.email,
+    },
   });
 });
 
