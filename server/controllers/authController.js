@@ -41,6 +41,7 @@ export const signup = asyncHandler(async (req, res) => {
   });
 
   await sendOtpEmail(email, otp);
+  message: 'Account created. Check your email for the OTP verification code.'
   res.status(201).json({
     success: true,
     message: 'Account created. Check your email for the OTP verification code.',
