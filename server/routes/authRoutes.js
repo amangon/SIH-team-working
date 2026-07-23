@@ -18,7 +18,5 @@ router.post('/login', authLimiter, auth.login);
 router.post('/refresh', auth.refresh);
 router.post('/logout', auth.logout);
 router.post('/forgot-password', authLimiter, auth.forgotPassword);
-router.post('/reset-password/:token', authLimiter, auth.resetPassword);
-router.get('/me', protect, auth.me);
 
 export default router;
