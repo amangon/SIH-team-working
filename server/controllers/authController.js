@@ -169,27 +169,46 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
 });
 
-/** POST /api/auth/reset-password/:token */
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { password } = req.body;
-  if (!password || password.length < 6) throw new ApiError(400, 'Password must be at least 6 characters');
+/** POST /api/auth/forgot-password */
+export const forgotPassword = asyncHandler(async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  const hash = crypto.createHash('sha256').update(req.params.token).digest('hex');
-  const user = await User.findOne({
-    resetToken: hash,
-    resetTokenExpires: { $gt: Date.now() },
-  }).select('+refreshTokens');
-  if (!user) throw new ApiError(400, 'Invalid or expired reset link');
+    const user = await User.findOne({ email });
 
-  user.password = password;
-  user.resetToken = undefined;
-  user.resetTokenExpires = undefined;
-  user.refreshTokens = []; // revoke all sessions
-  await user.save();
-  res.json({ success: true, message: 'Password reset. You can now log in.' });
-});
+    // Always respond success to avoid account enumeration
+    if (user) {
+      const raw = crypto.randomBytes(32).toString("hex");
 
-/** GET /api/auth/me */
-export const me = asyncHandler(async (req, res) => {
-  res.json({ success: true, data: { user: sanitizeUser(req.user) } });
+      user.resetToken = crypto
+        .createHash("sha256")
+        .update(raw)
+        .digest("hex");
+
+      user.resetTokenExpires = Date.now() + 30 * 60 * 1000;
+
+      await user.save({ validateBeforeSave: false });
+
+      const url = `${process.env.CLIENT_URL}/reset-password/${raw}`;
+
+      console.log("📩 Sending reset email to:", email);
+      console.log("🔗 Reset URL:", url);
+
+      try {
+        await sendResetEmail(email, url);
+        console.log("✅ Reset email sent successfully");
+      } catch (err) {
+        console.error("❌ RESET EMAIL ERROR:", err);
+        throw err;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "If that email exists, a reset link has been sent.",
+    });
+  } catch (err) {
+    console.error("❌ FORGOT PASSWORD ERROR:", err);
+    throw err;
+  }
 });
