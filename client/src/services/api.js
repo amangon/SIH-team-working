@@ -8,7 +8,10 @@ let accessToken = null;
 export const setAccessToken = (token) => { accessToken = token; };
 export const getAccessToken = () => accessToken;
 
-export const api = axios.create({ baseURL: '/api', withCredentials: true });
+export const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
+  withCredentials: true,
+});
 
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
@@ -26,7 +29,11 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         // Deduplicate concurrent refreshes
-        refreshPromise ||= axios.post('/api/auth/refresh', {}, { withCredentials: true })
+        refreshPromise ||= axios.post(
+  `${import.meta.env.VITE_API_URL}/api/auth/refresh`,
+  {},
+  { withCredentials: true }
+)
           .finally(() => { refreshPromise = null; });
         const { data } = await refreshPromise;
         setAccessToken(data.data.accessToken);
