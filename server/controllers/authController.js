@@ -176,12 +176,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   // Always respond success to avoid account enumeration
   if (user) {
-    const raw = crypto.randomBytes(32).toString('hex');
+    const raw = crypto.randomBytes(32).toString("hex");
 
     user.resetToken = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(raw)
-      .digest('hex');
+      .digest("hex");
 
     user.resetTokenExpires = Date.now() + 30 * 60 * 1000;
 
@@ -189,11 +189,20 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
     const url = `${process.env.CLIENT_URL}/reset-password/${raw}`;
 
-    await sendResetEmail(email, url);
+    console.log("📩 Sending reset email to:", email);
+    console.log("🔗 Reset URL:", url);
+
+    try {
+      await sendResetEmail(email, url);
+      console.log("✅ Reset email sent successfully");
+    } catch (err) {
+      console.error("❌ RESET EMAIL ERROR:", err);
+      throw err;
+    }
   }
 
   res.json({
     success: true,
-    message: 'If that email exists, a reset link has been sent.',
+    message: "If that email exists, a reset link has been sent.",
   });
 });
