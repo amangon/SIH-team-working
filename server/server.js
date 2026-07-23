@@ -17,9 +17,17 @@ import { UPLOAD_DIR } from './services/storage.js';
 const app = express();
 const server = http.createServer(app);
 
+// Render proxy fix
+app.set("trust proxy", 1);
+
 /* ── Security & parsing middleware ── */
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 app.use(mongoSanitize());
