@@ -19,25 +19,42 @@ const consoleDriver = {
 
 const smtpDriver = {
   transporter: null,
+
   getTransporter() {
     if (!this.transporter) {
       this.transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT) || 587,
         secure: Number(process.env.SMTP_PORT) === 465,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      this.transporter.verify((err) => {
+        if (err) {
+          console.error("❌ SMTP Error:", err);
+        } else {
+          console.log("✅ SMTP Connected Successfully");
+        }
       });
     }
+
     return this.transporter;
   },
+
   async send({ to, subject, text, html }) {
-    return this.getTransporter().sendMail({
-      from: process.env.EMAIL_FROM || 'TeamSync AI <no-reply@teamsync.ai>',
+    const info = await this.getTransporter().sendMail({
+      from: process.env.EMAIL_FROM,
       to,
       subject,
       text,
       html,
     });
+
+    console.log("✅ Email sent:", info.messageId);
+    return info;
   },
 };
 
